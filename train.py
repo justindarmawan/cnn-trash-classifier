@@ -48,7 +48,8 @@ def main():
     epoch = 20
     lr =  0.001
 
-    wandb.login(force=True)
+    wandb_api_key = os.getenv('WANDB_API_KEY')
+    wandb.login(key=wandb_api_key, force=True)
     wandb.init(
     project="cnn_trash_classifier",
     entity="jdarmawan-jd",
