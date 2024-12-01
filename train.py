@@ -7,7 +7,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import WandbCallback
+from tensorflow.keras.callbacks import LambdaCallback
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import shutil
@@ -30,6 +30,15 @@ def prepare_data(dataset):
             os.makedirs(label_path, exist_ok=True)
             
             image.save(os.path.join(label_path, f"{unique_id}.jpg"))
+
+def log_epoch_metrics(epoch, logs):
+    wandb.log({
+        "epoch": epoch + 1,
+        "loss": logs["loss"],
+        "accuracy": logs["accuracy"],
+        "val_loss": logs["val_loss"],
+        "val_accuracy": logs["val_accuracy"]
+    })
 
 def main():
     dataset = load_dataset("garythung/trashnet")
@@ -91,11 +100,13 @@ def main():
         metrics=['accuracy']
     )
 
+    epoch_logger = LambdaCallback(on_epoch_end=lambda epoch, logs: log_epoch_metrics(epoch, logs))
+
     model.fit(
         train_generator,
         epochs=epoch,
         validation_data=val_generator,
-        callbacks=[WandbCallback()]
+        callbacks=[epoch_logger]
     )
 
     loss, accuracy = model.evaluate(val_generator)
