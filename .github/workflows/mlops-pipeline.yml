@@ -24,7 +24,7 @@ jobs:
       - name: Log in to W&B
         env:
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-        run: wandb login --relogin
+        run: wandb login $WANDB_API_KEY
 
       - name: Train model
         run: |
