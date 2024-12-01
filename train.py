@@ -57,12 +57,11 @@ def main():
 
     train_datagen = ImageDataGenerator(
         rescale=1.0/255,
-        rotation_range=20,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
+        rotation_range=45,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        shear_range=0.1,
+        zoom_range=0.1,
         validation_split=0.2 
     )
 
@@ -84,17 +83,16 @@ def main():
 
     model = Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=(image_size, image_size, 3)),
-        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(64, (3, 3), activation='relu'),
-        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(128, (3, 3), activation='relu'),
-        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 2)),
+        Conv2D(256, (3, 3), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
         Flatten(),
         Dense(128, activation='relu'),
-        Dropout(0.3),
+        Dropout(0.5),
         Dense(train_generator.num_classes, activation='softmax') 
     ])
 
