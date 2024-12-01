@@ -47,7 +47,8 @@ def main():
     batch_size = 32
     epoch = 20
     lr =  0.001
-    
+
+    wandb.login(force=True)
     wandb.init(
     project="cnn_trash_classifier",
     entity="jdarmawan-jd",
