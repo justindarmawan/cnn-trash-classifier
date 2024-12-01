@@ -8,6 +8,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import LambdaCallback
+from tensorflow.keras.layers import BatchNormalization
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import shutil
@@ -56,13 +57,15 @@ def main():
 
     train_datagen = ImageDataGenerator(
         rescale=1.0/255,
-        rotation_range=20,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
-        zoom_range=0.2,
+        rotation_range=40,
+        width_shift_range=0.3,
+        height_shift_range=0.3,
+        shear_range=0.3,
+        zoom_range=0.3,
         horizontal_flip=True,
-        validation_split=0.2 
+        brightness_range=[0.8, 1.2],
+        channel_shift_range=50.0,
+        validation_split=0.2
     )
 
     train_generator = train_datagen.flow_from_directory(
@@ -83,15 +86,21 @@ def main():
 
     model = Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=(image_size, image_size, 3)),
+        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(64, (3, 3), activation='relu'),
+        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(128, (3, 3), activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 2)),
+        Conv2D(256, (3, 3), activation='relu'),
+        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
         Flatten(),
         Dense(128, activation='relu'),
         Dropout(0.5),
-        Dense(train_generator.num_classes, activation='softmax') 
+        Dense(train_generator.num_classes, activation='softmax')
     ])
 
     model.compile(
