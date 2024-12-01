@@ -6,9 +6,12 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import WandbCallback
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import shutil
+import wandb
 from datasets import load_dataset
 
 def prepare_data(dataset):
@@ -28,35 +31,20 @@ def prepare_data(dataset):
             
             image.save(os.path.join(label_path, f"{unique_id}.jpg"))
 
-def predict_image(image_path, model, class_indices):
-    image = load_img(image_path, target_size=(image_size, image_size))
-    image = img_to_array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
-
-    prediction = model.predict(image)
-    class_name = list(class_indices.keys())[np.argmax(prediction)]
-    match class_name:
-        case '0':
-            return 'cardboard'
-        case '1':
-            return 'glass'
-        case '2':
-            return 'metal'
-        case '3':
-            return 'paper'
-        case '4':
-            return 'plastic'
-        case '5':
-            return 'trash'
-
-
 def main():
     dataset = load_dataset("garythung/trashnet")
     prepare_data(dataset)
     image_size = 128
     batch_size = 32
+    epoch = 20
+    lr =  0.001
+    
+    wandb.init(
+    project="cnn_trash_classifier",
+    entity="jdarmawan-jd",
+    config={"learning_rate": lr, "epochs": epoch, "batch_size": batch_size} 
+    )
 
-    # Augmentasi untuk dataset training
     train_datagen = ImageDataGenerator(
         rescale=1.0/255,
         rotation_range=20,
@@ -65,7 +53,7 @@ def main():
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        validation_split=0.2  # Memisahkan data validasi
+        validation_split=0.2 
     )
 
     train_generator = train_datagen.flow_from_directory(
@@ -84,8 +72,6 @@ def main():
         subset='validation'
     )
 
-
-
     model = Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=(image_size, image_size, 3)),
         MaxPooling2D(pool_size=(2, 2)),
@@ -96,41 +82,25 @@ def main():
         Flatten(),
         Dense(128, activation='relu'),
         Dropout(0.5),
-        Dense(train_generator.num_classes, activation='softmax')  # Output sesuai jumlah kelas
+        Dense(train_generator.num_classes, activation='softmax') 
     ])
 
     model.compile(
-        optimizer='adam',
+        optimizer=Adam(learning_rate=lr),
         loss='categorical_crossentropy',
         metrics=['accuracy']
     )
 
-    history = model.fit(
+    model.fit(
         train_generator,
-        epochs=20,
-        validation_data=val_generator
+        epochs=epoch,
+        validation_data=val_generator,
+        callbacks=[WandbCallback()]
     )
 
     loss, accuracy = model.evaluate(val_generator)
-    print(f"Validation Accuracy: {accuracy:.2f}")
-
-
-    plt.figure(figsize=(12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.legend()
-    plt.title('Accuracy')
-
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.legend()
-    plt.title('Loss')
-
-    plt.show()
-    # class_indices = train_generator.class_indices
-    # print(predict_image('./trashnet_data/test/trash.jpg', model, class_indices))
+    wandb.log({"final_loss": loss, "final_accuracy": accuracy})
+    wandb.save("cnn_trash_classifier.pth")
 
 
 if __name__ == "__main__":
