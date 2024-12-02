@@ -105,10 +105,6 @@ def main():
         callbacks=[epoch_logger]
     )
 
-    model_path = 'model/cnn_trash_classifier_model.keras'
-    model.save(model_path)
-    wandb.save(model_path)
-
     loss, accuracy = model.evaluate(val_generator)
     wandb.log({"final_loss": loss, "final_accuracy": accuracy})
 
