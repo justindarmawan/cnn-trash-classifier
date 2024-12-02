@@ -105,13 +105,12 @@ def main():
         callbacks=[epoch_logger]
     )
 
+    model_path = 'model/cnn_trash_classifier_model'
+    model.save(model_path)
+    wandb.save(model_path)
+
     loss, accuracy = model.evaluate(val_generator)
     wandb.log({"final_loss": loss, "final_accuracy": accuracy})
-    artifact = wandb.Artifact("model", type="model")
-    artifact.add_file("cnn_trash_classifier.pth")
-    wandb.log_artifact(artifact)
-    wandb.save("cnn_trash_classifier.pth")
-
 
 if __name__ == "__main__":
     main()
