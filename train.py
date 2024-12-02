@@ -1,17 +1,11 @@
 import os
-import numpy as np
 import tensorflow as tf
 import uuid
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.optimizers import Nadam
 from tensorflow.keras.callbacks import LambdaCallback
-from tensorflow.keras.layers import BatchNormalization
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-import shutil
 import wandb
 from datasets import load_dataset
 
@@ -113,6 +107,9 @@ def main():
 
     loss, accuracy = model.evaluate(val_generator)
     wandb.log({"final_loss": loss, "final_accuracy": accuracy})
+    artifact = wandb.Artifact("model", type="model")
+    artifact.add_file("cnn_trash_classifier.pth")
+    wandb.log_artifact(artifact)
     wandb.save("cnn_trash_classifier.pth")
 
 
